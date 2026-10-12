@@ -10,9 +10,9 @@ usage: python music_pulses.py        -> a printed shortlist, and pulses.json [[b
 Needs only the music block of timeline.py (MUSIC, BPM, BEAT0, M0, R0, R1); the stars mark the kills of
 whatever SEGS is in the file, so ignore them until the segments are yours.
 Use it to (1) put every kill on a kick or a snare, never on an empty beat or a bare hat (reference style:
-a loud hat may carry a level-1 kill, see reference-style.md), (2) put every transition on a kick / bass hit,
-never on a snare alone (the cut lands with the weight of the music), and (3) fill
-PULSES in timeline.py with the strong hits that carry no kill (weight about 0.5 to 0.9).
+a loud hat may carry a level-1 kill, see reference-style.md), (2) with CUTS_ON = "bass" in timeline.py (the
+default), put every transition on a kick / bass hit, never on a snare alone; with "kills" the list is only
+information, and (3) fill PULSES in timeline.py with the strong hits that carry no kill (weight about 0.5 to 0.9).
 This grid-exact measure outranks the coarse bass table of music_tempo.py when they disagree."""
 import json, subprocess
 import numpy as np
@@ -78,4 +78,6 @@ by_beat = {r[0]: r for r in rows}
 tr = [(round(s["r0"] * 2) / 2, s["clip"]) for s in T.SEGS[1:]]
 off = [(b, c, "low %.2f mid %.2f" % tuple(by_beat[b][1:3]) if b in by_beat else "outside the grid") for b, c in tr
        if b not in by_beat or by_beat[b][1] < 0.4]
-print("transitions (%d) not on a kick / bass hit (low >= 0.4):" % len(tr), off or "none")
+mode = getattr(T, "CUTS_ON", "bass")
+print("transitions (%d) not on a kick / bass hit (low >= 0.4), CUTS_ON = %r%s:" % (
+    len(tr), mode, ", must be none" if mode == "bass" else ", information only"), off or "none")

@@ -1,6 +1,6 @@
 # Edit de gameplay no beat, feito pelo Claude Code
 
-Uma skill do [Claude Code](https://docs.claude.com/en/docs/claude-code) que transforma clipes de Valorant, CS2 ou outro FPS e uma música num edit pronto para TikTok, Reels ou Shorts. Ela coloca cada kill no beat, faz slow motion suave com interpolação por IA, transições no grave da música, zooms curtos nas kills e palavras da letra na tela, e entrega até a capa.
+Uma skill do [Claude Code](https://docs.claude.com/en/docs/claude-code) que transforma clipes de Valorant, CS2 ou outro FPS e uma música num edit pronto para TikTok, Reels ou Shorts. Ela coloca cada kill no beat, faz slow motion suave com interpolação por IA, transições no grave da música ou no ritmo das kills (você escolhe), zooms curtos nas kills e palavras da letra na tela, e entrega até a capa.
 
 Não usa editor de vídeo. O Claude escreve a edição num arquivo Python (`timeline.py`), um pipeline próprio monta cada frame, e o ffmpeg só lê e grava os vídeos.
 
@@ -84,7 +84,7 @@ flowchart LR
 1. **Qualquer gravação vira o formato de trabalho.** 1440p, 4K, 4:3 esticado ou ultrawide, de 30 a 240 fps: cada clipe vira 1920x1080 a 60 fps. Quando um frame original cai no instante certo, ele é usado sem mexer (120 e 240 fps). Quando não cai, o RIFE cria o frame no instante exato (144 fps, por exemplo). Nunca se repete frame, e o som fica alinhado ao frame (0,000 ms de diferença medida).
 2. **Frames pelo número.** Cortar com `-ss` e `fps=60` no ffmpeg duplicava 1 frame em cada 3 (era isso que o pessoal sente como "quedas de fps"). Todo frame é lido pelo índice.
 3. **Kills em qualquer jogo.** A skill acha cada linha nova do kill feed e, olhando para trás, o tiro: no som (o estampido), na imagem (o clarão da arma) e no contador de munição. O frame que vai no beat é o do **disparo**, não o da linha do feed, que aparece de 5 a 12 frames depois. Há perfis de Valorant, CS2 e um genérico para qualquer outro jogo.
-4. **Música.** Mede o BPM e refina a grade de beats contra os ataques do bumbo (o primeiro chute costuma vir uns 38 ms adiantado). As kills só vão em bumbo, caixa ou hi-hat forte que foram medidos, e as **transições só no grave**.
+4. **Música.** Mede o BPM e refina a grade de beats contra os ataques do bumbo (o primeiro chute costuma vir uns 38 ms adiantado). As kills só vão em bumbo, caixa ou hi-hat forte que foram medidos. As transições vão onde você escolher no briefing: **no grave** (o padrão, mais fino, com menos cortes) ou **no ritmo das kills** (mais cortes, mais acelerado). No grave, a skill confere que nenhuma transição caiu fora dele.
 5. **A edição é código.** `timeline.py` diz, em beats, qual frame de qual clipe aparece em cada momento. As rampas de velocidade são curvas suaves entre âncoras.
 6. **Slow motion de verdade.** O RIFE cria frames intermediários (240 fps em tudo, 960 fps onde está lento). Cada frame final é a média dos subframes no tempo do obturador, o que dá motion blur real e nenhum engasgo.
 7. **Som.** Cada tiro é colocado exatamente no beat. Depois vêm risers antes dos drops, whoosh nas transições do estilo house e um limitador. O AAC é gravado com PNS, TNS e intensity stereo desligados, porque com eles três versões saíram estourando.
@@ -116,7 +116,7 @@ A skill aprendeu com o feedback de quem a fez. Algumas regras viraram lei:
 | O fim só escurece, sem zoom no ace | "no fim nao de um zoom no ace apenas deixe a tela escurecer" |
 | Letras translúcidas, no meio da tela, uma palavra por vez | "as letras estavam sem transparencia alguma 100% solidas" |
 | Nenhum texto além da letra | "tira esse valorant edit da tela" |
-| Transição no grave (bumbo, 808), nunca só na caixa; a caixa fica para os acentos dentro do take | dica de um editor: "as transições rolarem nos graves da música, não no snare ... vai ficar mais fino" |
+| Transições no grave (bumbo, 808) ou no ritmo das kills: **opção sua no briefing**, com o grave como padrão | dica de um editor: "as transições rolarem nos graves da música, não no snare ... vai ficar mais fino" |
 | Kill bonita = tiro limpo de longe, não o maior flick | "aquela kill da raze, é muito feia" |
 | Perguntar só no começo (o briefing); depois decidir sozinho e contar no fim | "nao me pergunte NADA" |
 

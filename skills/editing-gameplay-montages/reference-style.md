@@ -38,9 +38,9 @@ In the project folder, with `FF=$("$PY" ff.py | tr -d '\r')` and `REF` = the ref
 | format | 1920x1080, 60 fps, full-frame gameplay with HUD | `W, H = 1920, 1080`; `clipio.CROP_X, CROP_W = 0, 1920`; no window, no backdrop. Anything else: "Another frame size or rate (not built)" below |
 | zoom | none held; small pushes and punches | push-in 3.5 % over a take (10 % over the 7-beat bullet time, 8 % over one 4-beat take, 0 in the intro and on the final take), kill punch 1.6 / 2.6 / 4.5 % by level, a lean of 8.5 % on the last 2 frames before a cut, and the 5-frame zoom burst of a `bzoom` blur-in. Nothing else enlarges the picture |
 | clip anatomy | hard cut, 3-4 blurred frames of compressed motion, sharp near-frozen slow motion, 1-2 frames of speed-up | `pre()`: 16 source frames in the 4 frames before the beat, last frame at real time; K on the beat; `post()`: real time 0.3 beat (until the feed row confirms the kill), slow motion 0.12-0.16x, 0.08 beat out. A half-beat clip runs on at real time |
-| cut position | just before the hit | cut 0.15 beat (4 frames at 130 BPM) before the beat it lands on, so the flash is on the hit. That beat must be a kick / bass hit (808), never a snare alone (an editor's note: "as transições rolarem nos graves da música, não no snare"): a take starts on a kick, and kills on snares or hats go inside a take (`M` entries) instead of right after a cut. The delivered v3 predates the rule: 19 of its 57 cuts land on a kick (measured) |
+| cut position | just before the hit | cut 0.15 beat (4 frames at 130 BPM) before the beat it lands on, so the flash is on the hit. Which beats: `CUTS_ON` (the user's choice in the briefing). `"bass"` (default; an editor's note: "as transições rolarem nos graves da música, não no snare"): only kicks / 808s, so a take starts on a kick and kills on snares or hats go inside a take (`M` entries) instead of right after a cut. `"kills"`: a cut before each kill, as in the delivered v3 (19 of its 57 cuts land on a kick, measured) |
 | blur-in | horizontal whip with thin streaks, zoom burst with rays, rotated whip, red/cyan split | `blur_in()` and `streaks()` in render.py: post effects on the finished frame, strength `(1 - q/5)^2` |
-| pacing | 16th-note runs, 8th and quarter-note clips | the kicks set the clip lengths (cuts only on kicks): sparse 808s give takes of 2 beats or more with the snare and hat kills inside them; a dense kick pattern allows 1-beat clips; breakdown: bullet time (`L` entry) into the best kill, which fires on the drop. v3 cut on hats every half beat in places; that predates the rule |
+| pacing | 16th-note runs, 8th and quarter-note clips | `"kills"` (as v3): sparse 808s: 2-beat clips; hats on every half beat: 1-beat clips with a few half-beat runs. `"bass"`: the kicks set the clip lengths, so sparse 808s give takes of 2 beats or more with the snare and hat kills inside them, and a dense kick pattern allows 1-beat clips. Both: breakdown: bullet time (`L` entry) into the best kill, which fires on the drop |
 | lyric words | Impact caps, about 23 % of the frame height, letters pop in random order, see-through tinted fill, red in the intro | `textfx.py` (needs Impact at `C:/Windows/Fonts/impact.ttf`, no fallback: `render.py` imports it, so without the font nothing renders); see "Lyric words" |
 | look | sharp, saturated, colour fringes at the edges | per-channel zoom `CA0 = 0.0011`, saturation 1.20, S-curve, `unsharp 0.55` at encode |
 | intro | slow cinematic shots without HUD | the user has no HUD-free footage and rejects cropping: ability shots in slow motion at FULL FRAME, `shutter=2.2` to `2.6` output frames, `push=0`, `intro=True`, `mute=True`, soft whips, red words |
@@ -89,9 +89,9 @@ Kills go on measured hits (`music_pulses.py`). In the delivered edit: 30 on kick
 section has one), 13 more on snares or claps, 19 on a loud hat (`high` 0.69 to 1.00) in the passages
 where hats run on every half beat, none on a beat where nothing arrives. `music_pulses.py` lists 18 of
 those 19 under "kills on a beat with neither kick nor snare": in this style check that each has a high
-value; in the house style that list must be empty. Cuts go on kicks only: `music_pulses.py`'s line
-"transitions not on a kick / bass hit" must say "none" (with sparse 808s that means fewer, longer takes
-holding several kills, not a cut before every kill). Levels: `lv=3` on the drop and on the final kill, `lv=2` on the
+value; in the house style that list must be empty. With `CUTS_ON = "bass"`, cuts go on kicks only:
+`music_pulses.py`'s line "transitions not on a kick / bass hit" must say "none" (with sparse 808s that means
+fewer, longer takes holding several kills, not a cut before every kill). Levels: `lv=3` on the drop and on the final kill, `lv=2` on the
 first kill and on kicks after the drop (16 kills), level 1 elsewhere. 62 kills in 37 s of gameplay.
 
 ## Finding kills in raw 2-minute recordings

@@ -60,11 +60,13 @@ What v4 does, and why:
    its lead-in (v4: -5.2, a 4.2-beat lead into the kill on the drop). `R1` = the last kill plus its
    tail plus 4 to 7 beats for the end card. `FADE_OUT` = the last 2 to 3 beats.
 4. `music_pulses.py` lists the kicks (`low`) and the snares or claps (`mid`; v4: every 4 beats from
-   beat 1); hats alone (`high` only) do not count. Kills go only on kicks and snares. **Transitions go
-   only on kicks / bass hits** (an editor's note: "as transições rolarem nos graves da música, não no
-   snare ... vai ficar mais fino"): the cut lands with the weight of the track, the snare stays for the
-   accents inside a take. Strong hits without a kill or a transition go into `PULSES` with a weight of
-   0.5 to 0.9. `music_spec.py` shows the same thing as a picture when a hit is unclear.
+   beat 1); hats alone (`high` only) do not count. Kills go only on kicks and snares. Where the
+   transitions go is the user's choice, `CUTS_ON` in the timeline (briefing): `"bass"` (default, an
+   editor's note: "as transições rolarem nos graves da música, não no snare ... vai ficar mais fino")
+   puts every transition on a kick / bass hit, so the cut lands with the weight of the track and the
+   snare stays for the accents inside a take; `"kills"` follows the kill rhythm, as v4 did. Strong hits
+   without a kill or a transition go into `PULSES` with a weight of 0.5 to 0.9. `music_spec.py` shows
+   the same thing as a picture when a hit is unclear.
 5. Use the structure: a breakdown before the drop carries the lead-in and a riser; a break near the end
    (v4: beats 63.3 to 68) carries the bullet time, with the music low-passed (`SWEEP`) and a second
    riser, both opening on the kill at the re-entry.
@@ -138,12 +140,12 @@ saturation drops 14 %, the backdrop dims 30 %, and the camera pushes in 7 to 20 
 | `dissolve` / `soft` | 0.5 / 1.2 beats | into slow motion, into the end card | plain cross-fade |
 
 An overlapping transition is centred on the first anchor of the incoming segment and needs footage of
-both clips for half its length beyond the anchors (`ranges.py` accounts for it). Centre it (a `zcut`:
-put the cut) on a kick or bass hit: in trap the 808s are sparse, so use the kicks that carry no kill,
-and keep kills out of the transition: the next kill at least 1.5 beats after its centre. `music_pulses.py`
-prints "transitions not on a kick / bass hit"; it must say "none". The example timeline predates this
-rule: 0 of v4's 13 transitions sit on a kick (measured), so do not copy its transition beats. Vary
-direction and kind; v4 uses 4 whips, 4 zcuts, 2 zooms, 1 spin, 1 dissolve and 1 soft.
+both clips for half its length beyond the anchors (`ranges.py` accounts for it). Keep kills out of it:
+the next kill at least 1.5 beats after its centre. With `CUTS_ON = "bass"`, centre it (a `zcut`: put the
+cut) on a kick or bass hit: in trap the 808s are sparse, so use the kicks that carry no kill;
+`music_pulses.py` then prints "transitions not on a kick / bass hit" and it must say "none". The example
+timeline is `"kills"` (0 of v4's 13 transitions sit on a kick, measured): with `"bass"` do not copy its
+transition beats. Vary direction and kind; v4 uses 4 whips, 4 zcuts, 2 zooms, 1 spin, 1 dissolve and 1 soft.
 
 ## Sound
 

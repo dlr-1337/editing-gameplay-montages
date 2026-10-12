@@ -22,6 +22,9 @@ FPB = FPS * PER                     # output frames per beat (27.69)
 R0, R1 = -16.0, 84.6                # first / last beat of the video (46.4 s)
 FADE_OUT = (82.0, 84.6)             # the music fades over these beats
 LUMA_FADE = (82.3, 83.2)            # the picture: dark areas go black first, highlights last (as in the reference)
+CUTS_ON = "kills"                   # where cuts land: "bass" (kicks / 808s only) or "kills" (with the kill rhythm).
+                                    # This delivered edit was cut with the kills; a new edit takes the user's choice from
+                                    # the briefing, "bass" by default (music_pulses.py checks it)
 
 
 def beat_time(r):

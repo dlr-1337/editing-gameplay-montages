@@ -9,7 +9,7 @@ so keep tiles at 100 px or more with large labels (the scripts do).
 | Check | Passes when |
 |---|---|
 | `$PY timeline.py` | prints every segment, no assertion, no "note:" you did not intend |
-| `$PY music_pulses.py` | "transitions not on a kick / bass hit: none" (both styles); house style also "kills on a beat with neither kick nor snare: none" |
+| `$PY music_pulses.py` | with `CUTS_ON = "bass"`: "transitions not on a kick / bass hit: none" (both styles); house style also "kills on a beat with neither kick nor snare: none" |
 | `$PY ranges.py` | no ERROR (anchors inside the clips) |
 | `$PY check_store.py` | `missing footage: 0` and no frame that copies its predecessor |
 | gallery from `kill_table.py` (raw recordings: `gal_NN.jpg` from `mykills.py`) | for every kill: flash visible on tile `+0`, absent on `-1`; otherwise set K with `[banner, K]` (raw recordings: find it on `strip.py` and type it into the timeline entry) |

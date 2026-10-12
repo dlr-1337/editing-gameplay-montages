@@ -21,7 +21,7 @@ briefing and start. Then wait for the answer. After it, decide everything else a
 
 > Bora fazer esse edit! Antes de eu começar, me conta:
 >
-> 1. **O que você quer**: vertical (TikTok, Reels, Shorts) ou horizontal (YouTube)? Quanto tempo, uns 15, 30 ou 45 segundos? Mais intenso ou mais suave? Quer a letra da música na tela? Quer capa?
+> 1. **O que você quer**: vertical (TikTok, Reels, Shorts) ou horizontal (YouTube)? Quanto tempo, uns 15, 30 ou 45 segundos? Mais intenso ou mais suave? As transições no grave da música (mais fino, menos cortes) ou no ritmo das kills (mais cortes, mais acelerado)? Quer a letra da música na tela? Quer capa?
 > 2. **As jogadas**: quais são as melhores, e qual você quer abrindo e fechando o vídeo? Tem alguma que não pode faltar ou que você não curte?
 > 3. **A música**: qual arquivo, e se quiser, qual parte (por exemplo "o drop em 0:45").
 > 4. **O jogo**: Valorant, CS2 ou outro?
@@ -34,7 +34,7 @@ briefing and start. Then wait for the answer. After it, decide everything else a
 >
 > Depois disso eu decido o resto sozinho e te entrego cada versão como um arquivo novo, sem apagar nada seu.
 
-Defaults for anything left unanswered: vertical house style, about 30 s, intensity as the examples, no
+Defaults for anything left unanswered: vertical house style, about 30 s, intensity as the examples, transitions on the bass (`CUTS_ON = "bass"`), no
 text on screen, no cover, the section and plays you judge best. With a reference video in the folder:
 the reference style, artist and title as intro words, lyric words only if every line was confirmed
 (reference-style.md, "Lyric words"). The vertical house style has no text renderer (edit-design.md, "Not
@@ -55,7 +55,7 @@ Not for: plain trimming, joining or converting (use ffmpeg directly); edits the 
 - 1080x1920, 60 fps. Gameplay in a wide rounded window over a blurred backdrop of the same footage that pulses with the beat.
 - Every kill on a measured kick or snare, with its gunshot heard on that beat.
 - Zoom, shake and flash are short accents on kills. Slow motion only as a finisher, with real motion blur. Inside a take, speed ramps replace cuts.
-- Transitions move both clips (whip, spin, zoom-through). No white flashes. Every transition lands on a kick / bass hit, never on a snare alone.
+- Transitions move both clips (whip, spin, zoom-through). No white flashes. Where they land is the user's choice (`CUTS_ON` in the timeline): on the bass by default, or with the kill rhythm.
 - Intense but smooth: stutter is the defect this user notices first.
 
 ## What this user wants, in their words
@@ -67,7 +67,7 @@ These hold in BOTH styles and outrank a reference video where the two disagree.
 | No standing zoom: never a crop or zoom that enlarges the gameplay for a whole shot, not even to hide the HUD. Short accents that ease in and out were accepted, each style with its own values: house (windowed) kill zooms of 12 to 21 %, edit-design.md; reference (full frame) a push-in of 3.5 % per take and a kill punch under 5 %, reference-style.md | "voce deixou um zoom no video todo ... fica estranho"; "no comeco aquele zoom ta mt feio" |
 | Nothing may stutter; slow motion perfectly smooth | "o slow motion ta bem travadinho"; "sinto umas quedas de fps" |
 | Kills exactly on the beat | "da pra sincronizar melhor" |
-| Transitions on the bass (kick, 808), not on the snare; snares carry the accents inside a take (zoom punch, shake, a kill). Both styles. Measured: the delivered v4 had 0 of 13 transitions on a kick, v3 19 of 57 | an editor's note the user adopted: "bota no prompt para as trasições rolarem nos graves da música, não no snare. acho que vai ficar mais fino" |
+| Where transitions land is an OPTION asked in the briefing, `CUTS_ON` in timeline.py. `"bass"` (default): every transition on a kick / 808, never on a snare alone; the snare carries the accents inside a take (zoom punch, shake, a kill); fewer, longer takes in sparse trap. `"kills"`: transitions follow the kill rhythm, as in both delivered edits, which the original user accepted (measured: v4 had 0 of 13 transitions on a kick, v3 19 of 57) | an editor's note: "as trasições rolarem nos graves da música, não no snare. acho que vai ficar mais fino"; the user: "essas transicoes no grave pode ser uma opcao da pessoa" |
 | The ending only darkens: no zoom on the ace | "no fim nao de um zoom no ace apenas deixe a tela escurecer" |
 | Words on screen are translucent | "as letras estavam sem transparencia alguma 100% solidas" |
 | Words sit in the exact middle of the screen | "tem que centralizar a letra no meio da tela" |
@@ -86,7 +86,7 @@ These hold in BOTH styles and outrank a reference video where the two disagree.
 2. **Reference style only**: dissect the reference frame by frame and write the findings to a notes file (reference-style.md).
 3. **Watch the clips and find the kills**. `$PY peek.py c1 0 99999 60` shows a clip at one tile per second. Any game: `$PY kills_auto.py <game>` (profiles in `games/`: `valorant`, `cs2`, `generic`; another game: copy `generic.json` to `games/<game>.json` and set its rectangles with `--regions`) writes `kills.json` and review sheets `autokill_NN.jpg`. The `cs2` profile comes from the game's HUD files and was never run on footage: run `--regions` on a frame with a kill first, and trust nothing before its sheets confirm it. Valorant also has the banner tools for trimmed clips (`find_kills.py`, `kill_table.py`) and the kill-feed + ammo tools for raw recordings (reference-style.md, "Finding kills in raw 2-minute recordings"). Confirm on the sheets that each kill is the player's and that its flash starts on tile K (`+0`), absent on K-1. Choose clean kills by reading the stills.
 4. **Music**: `$PY music_tempo.py` (tempo, candidate drops), then `$PY music_grid.py BPM BEAT0` (never skip: the first guess is tens of ms early). Fill in the music block at the top of `timeline.py` (`MUSIC`, `BPM`, `BEAT0`, `M0`, `R0`, `R1`, `FADE_OUT`, and what is tied to the song's structure: the `RISERS` beats, in the house style `SWEEP` and `PULSES`, in the reference style `LUMA_FADE`; choosing the section: edit-design.md "Music", valid for both styles; the example's segments can stay for now), then read the hits with `$PY music_pulses.py` and `$PY music_spec.py`. Lyric words: reference-style.md.
-5. **Write `timeline.py`** from `timeline_example.py` (edit-design.md) or `timeline_ref_example.py` (reference-style.md): best moments on the drops, the plays the user named where they asked, kills as anchors on measured hits, every transition on a kick / bass hit. `$PY timeline.py` must pass, and `$PY music_pulses.py` must print "none" for kills on empty beats (house style) and for transitions not on a kick (both styles).
+5. **Write `timeline.py`** from `timeline_example.py` (edit-design.md) or `timeline_ref_example.py` (reference-style.md): best moments on the drops, the plays the user named where they asked, kills as anchors on measured hits, `CUTS_ON` as chosen in the briefing (the examples say `"kills"`, how they were cut; a new edit is `"bass"` unless the user chose the kill rhythm). `$PY timeline.py` must pass, and `$PY music_pulses.py` must print "none" for kills on empty beats (house style) and, with `CUTS_ON = "bass"`, for transitions not on a kick.
 6. **Footage**: `$PY ranges.py && $PY prep.py ranges.json` (GPU, in the background), `$PY densify.py run 12 28`, reference style also `$PY posmap.py`, then `$PY check_store.py` (0 missing, no duplicates).
 7. **Stills before video**: `$PY render.py N N+1 look.jpg` on each kill, transition, slow-motion frame, word, first and last second; read them (stills can start while `prep.py` still runs; reference style: after one `$PY posmap.py`). Reference style: enlarged crops of your stills beside the same crops of the reference BEFORE the first full render (verification.md).
 8. **Sound**: house style: `$PY kill_lags.py` for each segment's `lag`, then `$PY audio.py` must put each shot within a few ms of its beat, or you must be able to explain the number (verification.md, "Sound"). Reference style: `$PY audio.py` says how each gunshot was placed (measured, clip offset, none) and must print a `mix peak` below 1.0.

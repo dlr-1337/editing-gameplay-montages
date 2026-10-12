@@ -17,6 +17,9 @@ FPS = 60
 FPB = FPS * PER                     # output frames per beat (27.69)
 R0, R1 = -5.2, 75.2                 # first / last beat of the video
 FADE_OUT = (72.4, 75.2)             # picture and music fade to black over these beats
+CUTS_ON = "kills"                   # where transitions land: "bass" (kicks / 808s only) or "kills" (with the kill rhythm).
+                                    # This delivered edit was cut with the kills; a new edit takes the user's choice from
+                                    # the briefing, "bass" by default (music_pulses.py checks it)
 
 
 def beat_time(r):
