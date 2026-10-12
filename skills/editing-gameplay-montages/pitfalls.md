@@ -59,7 +59,7 @@ The RIFE model was never the problem: seven versions differed by 1 to 3 % on rea
 | Reference-style edit: game sound would be chopped and pitched all the time | The takes are fast-forward or slow motion almost throughout. | One gunshot per kill at natural pitch on the beat (`refstyle/audio.py`); silent where the clip has no clean shot. |
 | `mix.wav` clips although every stem is below 1 | Resampling a loud 44.1 kHz master to 48 kHz peaks at 1.24. | Write the mix at 0.8 and apply `volume=1.475` before the limiter (refstyle `run.sh`). |
 | No gunshot onsets found in one clip | Its sound track is voice chat, not game sound. | House style: `voice=0.8`, typical `lag`, sync by the picture. Reference style: `mute=True` on every take of that clip (do not wait for `audio.py` to find nothing), and on a single talked-over kill in a clean clip. |
-| Peaks flattened although the final file is below 0 dBFS | The mix exceeded full scale (1.29) and was written to a 16-bit file before the limiter: 0.05 % of v4's samples, runs up to 0.4 ms, 49 dB below the mix. | Write the files with headroom (`HEADROOM = 0.5` in audio.py) and restore the level in front of the limiter (`volume=2.36`). |
+| Peaks flattened although the final file is below 0 dBFS | The mix exceeded full scale (1.29) and was written to a 16-bit file before the limiter: 0.05 % of v4's samples, runs up to 0.4 ms, 49 dB below the mix. | Write the files with headroom (`HEADROOM = 0.5` in audio.py) and restore the level in front of the limiter (house `run.sh`: `volume=2.36`; the reference style writes 0.8 and uses 1.475, see above). |
 | Low-pitched game sound after a slow-motion finisher | `tail()` ramps back to 0.75x, where the game sound is audible again; an overlapping transition stretches that. | Cut right after the tail, or `out_rate=0.3`. |
 | A gunshot 30 ms off the beat in a `stretch=True` segment | The pitch-preserving stretch moves transients when the speed at the kill is not 1. | Keep real time around the kill (`lead()` does) or drop `stretch`. |
 
@@ -68,16 +68,17 @@ The RIFE model was never the problem: seven versions differed by 1 to 3 % on rea
 | Trap | What to do |
 |---|---|
 | `python - <<EOF` (or any bare `python`) hangs forever in Git Bash: bare `python` is the Windows Store stub or 3.14 waiting on a console | Always `./venv311/Scripts/python`. Stop the stray `python.exe -` it leaves behind (by ID). |
-| `Stop-Process` by command-line pattern ends your own shell (exit 255): the pattern text is part of your own command line | List the processes, then stop by ID (pipeline.md, "Handling jobs"). Not by name either: other sessions run python on this PC. |
+| `Stop-Process` by command-line pattern ends your own shell (exit 255): the pattern text is part of your own command line | List the processes, then stop by ID (pipeline.md, "Handling jobs on this PC"). Not by name either: other sessions run python on this PC. |
 | A patch applied from a heredoc leaves a literal `\n` in the file, or silently applies nothing: shell and Python escaping stack, and a syntax error at the end voids every edit before it | Write the patch script with the Write tool (or use Edit); `assert s.count(old) == 1` for each replacement. |
 | JSON with accented words fails to load (`0xc3`): written or read with the Windows default encoding | `encoding="utf-8"` on every `open` of a text file. |
 | A script imports `timeline.py`, and `timeline.py` loads the file that script produces: neither can run first | `timeline.py` loads optional files behind `os.path.exists`. |
 | faster-whisper cannot open the song (`metadata_errors`): its bundled audio loader does not match on Python 3.14 | Decode with ffmpeg to 16 kHz float32 and pass the array (`transcribe.py` does). |
 | A foreground wait is cut after 10 minutes (tool limit) | Start long jobs with `run_in_background`: the harness tells you when the command exits (pipeline.md, "Handling jobs on this PC"). |
 | "The job has been slow for ten minutes": tool calls take seconds, much less time had passed than it felt | `date` and the process start time before diagnosing speed. |
-| Interpolation at an eighth of its speed, GPU at 100 %: the user opened a game (CS2 took 84 % of the GPU) | Leave the game alone. If the user has said they are playing: stop every job ("Working with this user"). If the game is only detected: stop GPU work and run CPU work (a render) at BelowNormal priority. Commands: pipeline.md, "Handling jobs". |
-| A job that writes the store is killed: a truncated JPEG "exists" and later runs skip it | Check that the newest files end with `FFD9` and delete those that do not (pipeline.md, "Handling jobs"). |
+| Interpolation at an eighth of its speed, GPU at 100 %: the user opened a game (CS2 took 84 % of the GPU) | Leave the game alone. If the user has said they are playing: stop every job ("Working with this user"). If the game is only detected: stop GPU work and run CPU work (a render) at BelowNormal priority. Commands: pipeline.md, "Handling jobs on this PC". |
+| A job that writes the store is killed: a truncated JPEG "exists" and later runs skip it | Check that the newest files end with `FFD9` and delete those that do not (pipeline.md, "Handling jobs on this PC"). |
 | ffmpeg installed by winget is not on PATH in a shell that was already open | `ff.py` finds it; or `export FF=...` |
+| `textfx.py` fails at import with `OSError: cannot open resource` (so does `render.py` of the reference style, which imports it), or the spectrogram labels look different | `textfx.py` needs Impact at `C:/Windows/Fonts/impact.ttf` and has no fallback: on a PC without it, change `FONT` there to another heavy font. `music_spec.py` and `mix_spec.py` use Arial Bold (`C:/Windows/Fonts/arialbd.ttf`) and fall back to Pillow's default font |
 | A script that loaded RIFE finishes its work and then dies with `Segmentation fault`, exit code 139 | the Vulkan runtime crashes while the process unloads; `rifeutil.finish()` as the last statement ends the process cleanly (the bundled scripts do). A pipe (`| tail`) hides the exit code, which is how this went unnoticed at first |
 | Python 3.14 is the default and has no RIFE wheels | `uv venv --python 3.11` |
 | The RIFE binding ships no models and reads the version from the folder NAME | keep `models/rife-v4.25/`; more at github.com/TNTwise/rife-ncnn-vulkan (`models/`) |
@@ -94,8 +95,9 @@ The RIFE model was never the problem: seven versions differed by 1 to 3 % on rea
 
 ## Working with this user
 
-- "nao me faca perguntas beleza ? apenas faça o que voce decidir e achar melhor": choose and act, then
-  report what was chosen. Never delete or overwrite anything of theirs, so that no confirmation is needed.
+- "nao me faca perguntas beleza ? apenas faça o que voce decidir e achar melhor": what to make is asked once,
+  in the briefing (SKILL.md); after it, choose and act, then report what was chosen. Never delete or
+  overwrite anything of theirs, so that no confirmation is needed.
 - A long blocking wait was interrupted once. Run renders and interpolation in the background and
   send a short line about progress.
 - Deliver each version as a new file beside the clips (`_v2`, `_v3`, ...). Earlier versions stay.

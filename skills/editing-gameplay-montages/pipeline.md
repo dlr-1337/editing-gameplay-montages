@@ -10,7 +10,8 @@ Each Bash call is a fresh shell: start every command with `cd "$P" && PY=./venv3
 ```
 <project>/
   clips.json            short name -> original file            you write it
-  src/                  c1.mp4 ... music.flac (hard links)      mksrc.py
+  src/                  c1.mp4 / c1.mkv ... music.flac          ingest.py (links, or converted working copies)
+  src/ingest.json       per clip: original size, fps, method     ingest.py
   pts/c1.csv ...        presentation time of every frame        mkpts.py
   banners.json          banner frame of every kill              you, from find_kills.py
   kills.json            kill frame K, gunshot, lag              kill_table.py
@@ -26,9 +27,11 @@ Where to put it: next to the user's clips as `<clips folder>/_editor/` (same dri
 space, and the project survives the session). If that folder already holds another video's project,
 use `_editor_<name>/`; never mix two videos in one project folder. `store/` takes 0.4 MB per sub-frame: about 7 GB for a
 37 s edit. Tell the user it is there and that it can be deleted (it rebuilds in about 30 minutes).
-`src/` holds hard links: while they exist, deleting the original clips frees no disk space. Say so in the
-report and in `LEIAME.md`; do not remove `src/` yourself (once the user has deleted an original, the link
-is the last copy of that clip). `mksrc.py` recreates the links instantly while the originals exist.
+`src/` holds hard links for sources already in the working format: while they exist, deleting the original
+clips frees no disk space. Say so in the report and in `LEIAME.md`; do not remove `src/` yourself (once the
+user has deleted an original, the link is the last copy of that clip). `ingest.py` recreates the links
+instantly while the originals exist. A converted working copy (`.mkv`, x264 crf 9 + FLAC) is a new, large
+file: put its size in the disk report.
 
 The numbers in this skill come from two delivered projects (not included: they hold the author's footage):
 - house style: v4, vertical, 37 s, 22 kills (`scripts/timeline_example.py` is its timeline);
@@ -41,17 +44,17 @@ The numbers in this skill come from two delivered projects (not included: they h
 SK=~/.claude/skills/editing-gameplay-montages
 P="/c/Users/<you>/Videos/<clips folder>/_editor"    # one project folder per video (_editor_<name> if _editor is taken)
 mkdir -p "$P" && cd "$P"
-cp "$SK"/scripts/*.* . && cp -r "$SK"/models . && cp timeline_example.py timeline.py     # *.* = files only (a bare * also hits the refstyle folder and cp fails)
+cp "$SK"/scripts/*.* . && cp -r "$SK"/scripts/games "$SK"/models . && cp timeline_example.py timeline.py     # *.* = files only (a bare * also hits the refstyle folder and cp fails); games/ = kill-finder profiles
 # reference style, in addition:
 #   cp "$SK"/scripts/refstyle/*.* . && cp timeline_ref_example.py timeline.py
 uv venv --python 3.11 venv311                       # 3.11: the RIFE binding has no wheels for 3.14
 uv pip install --python venv311/Scripts/python.exe -r requirements.txt
 PY=./venv311/Scripts/python
-# lyric words only: speech recognition in its own environment. It ran on 2026-10-11 with Python 3.14.8 and
-# faster-whisper 1.2.1 in a venv of the session's scratch folder (large-v3 on the CPU: about 4 min per minute of
-# song; the model, 3 GB, downloads on first use). The same thing inside the project, not run in this exact form:
+# lyric words only: speech recognition in its own environment, not venv311. Tested with Python 3.14 and
+# faster-whisper 1.2.1 (in a venv outside the project; the project-folder form below was not run exactly as written):
+# large-v3 on the CPU takes about 4 min per minute of song, and its 3 GB download happens on first use.
 #   uv venv --python 3.14 venv_asr && uv pip install --python venv_asr/Scripts/python.exe faster-whisper numpy
-#   ./venv_asr/Scripts/python transcribe.py src/music.flac lyrics_whisper.json large-v3 <seconds>
+#   ./venv_asr/Scripts/python transcribe.py src/music.flac lyrics_whisper.json large-v3 <t_end seconds>
 ```
 
 `clips.json` (forward slashes; written with PowerShell it gets a BOM, which the scripts accept):
@@ -61,10 +64,29 @@ PY=./venv311/Scripts/python
  "music": "C:/Users/<you>/Videos/valorant/01 - Artist - Song.flac"}
 ```
 
-`$PY mksrc.py && $PY mkpts.py`. `mkpts.py` warns about what the pipeline does not handle as is: a
-source that is not 1920x1080 (adjust `SW, SH, CROP_X, CROP_W` in clipio.py and `SRC_W, SRC_H,
-WIN_SRC_W` in render.py), a clip that is not 60 fps (anchors assume 60 source frames per second),
-gaps (frames the recorder dropped).
+`$PY ingest.py && $PY mkpts.py`. `ingest.py` brings every source into the working format that everything
+downstream assumes: 1920x1080, 60 fps constant, frame n at t0 + n/60 on the original clock. A source already
+in that format (1920x1080 within 0.5 fps of 60) is hard-linked untouched; anything else (1440p, 4K, 720p,
+4:3 stretched, 21:9, 120 / 144 / 165 / 240 fps, 30 fps, variable frame rate) becomes a converted `src/<name>.mkv`:
+
+- Size: narrower than 16:9 (4:3, 16:10: CS2 "stretched") is stretched to 16:9, which is what the player saw;
+  wider (21:9, 32:9) is cropped at the centre; `--aspect stretch|crop|pad` overrides.
+- Time: a source frame within 1.5 ms of the wanted instant is used unchanged (120 / 240 fps are exact picks).
+  Otherwise `--exact` (default for clips up to 90 s) interpolates the two frames around the instant with RIFE
+  at the exact fraction; `--fast` (default for longer raw recordings) takes the nearest frame, at most half a
+  source frame off (3.5 ms at 144 fps). Below 60 fps it always interpolates: a repeated frame is a stutter.
+  Once the timeline uses a `fast` clip, upgrade it with `$PY ingest.py --exact --only c3`, delete `store/c3`
+  and run `mkpts.py`, `prep.py` and `densify.py` again: the frame grid is the same, so K values and anchors stay.
+- Sound: the clip's audio as FLAC, aligned so that frame n and its sound belong together (measured: 0.000 ms
+  offset on a forced conversion, and with audio starting 0.35 s after or 0.3 s before the video).
+
+Measured on a GTX 1650 against a real 1080p60 recording: forced conversion of the same clip 41 to 45 dB per
+frame (x264 rounding only); 120 fps source, 0 interpolations; 144 fps and 2560x1440 built from 60 fps,
+motion evenness as the original (no repeated frame, no extra jumps); 30 fps: no repeated frame, but every
+other frame is invented (25.9 dB on average against a real 60 fps recording, weak on fast flicks), so ask for
+60 fps or more. Speed: 48 frames per second when frames are only picked, about 10 with `--exact` on 144 fps.
+
+`mkpts.py` then reports frame rate, jitter and gaps of the working copies (gaps: frames the recorder dropped).
 
 ffmpeg is found by `ff.py`: `$FF`, then PATH, then the winget install
 (`%LOCALAPPDATA%\Microsoft\WinGet\Packages\Gyan.FFmpeg*`). Install with `winget install Gyan.FFmpeg`;
@@ -72,13 +94,22 @@ a shell opened before the install does not have it on PATH, which is why `ff.py`
 
 Machine these numbers come from: Windows 11, Ryzen 5 5500 (6 cores), 16 GB RAM, GTX 1650 4 GB.
 
+Two settings that depend on the PC:
+- GPU index: `rifeutil.load()` creates `Rife(gpuid=0, ...)`. On a PC with two GPUs (integrated and dedicated) the
+  Vulkan device index of the dedicated one may not be 0: change `gpuid` there (one place, `rifeutil.py`) and check
+  with the GPU command under "Handling jobs on this PC" that the 3D load is on the dedicated GPU while `prep.py` runs.
+- CPU threads: `render.py` gives OpenCV `CVT` threads (environment variable, default 4) in each of the three
+  processes `run.sh` starts. `refstyle/run.sh` takes `CVT` from the environment (`CVT=2 bash run.sh master.mp4`);
+  the house `run.sh` sets `CVT=4` itself, so edit its `export CVT=4` line there.
+
 ## Scripts
 
 | Script | What it does | Call |
 |---|---|---|
-| `mksrc.py` | short names in `src/` | `$PY mksrc.py` |
+| `ingest.py` | working copies in `src/` (any size and frame rate -> 1920x1080 60 fps), `src/ingest.json` | `$PY ingest.py`, `--only c3 --exact` to upgrade a `fast` clip |
 | `mkpts.py` | frame time tables, source warnings | `$PY mkpts.py` |
 | `peek.py` | contact sheet of real frames (how you watch a clip) | `$PY peek.py c3 0 1320 30` overview, `$PY peek.py c3 268 300` every frame |
+| `kills_auto.py` | ANY game: kill-feed rows -> shot frame K (gunshot in the audio, muzzle flash, ammo counter) -> `kills.json` + review sheets `autokill_NN.jpg`; profiles in `games/` (`valorant`, `cs2` not yet checked on footage, `generic`) | `$PY kills_auto.py valorant`, `$PY kills_auto.py cs2 c1 c3`, `$PY kills_auto.py cs2 --regions c1 1500` to check a profile's rectangles on a frame |
 | `find_kills.py` | kill-banner sheets + candidate frames (Valorant HUD) | `$PY find_kills.py c3` or `c1 82 97` (seconds) |
 | `kill_table.py` | per kill: frame K for the beat, gunshot, lag, gallery | `$PY kill_table.py` (reads `banners.json`; an entry `[banner, K]` fixes K by hand) |
 | `cadence.py` | duplicated frames / real pauses in a source clip | `$PY cadence.py c1 5290 5725`, add `--detail` on a short range |
@@ -89,7 +120,7 @@ Machine these numbers come from: Windows 11, Ryzen 5 5500 (6 cores), 16 GB RAM, 
 | `timeline.py` | the edit; run it to print and self-check | `$PY timeline.py` |
 | `ranges.py` | footage needed by the timeline -> `ranges.json` | `$PY ranges.py` |
 | `prep.py` | builds the sub-frame store with RIFE (resumable) | `$PY prep.py ranges.json` |
-| `densify.py` | more in-betweens where the picture moves fast | `$PY densify.py run 12 28` (`plan` only prints) |
+| `densify.py` | more in-betweens where the picture moves fast | `$PY densify.py run 12 28`; `plan 12 28` only prints. Both take the two thresholds (output pixels of travel per frame that trigger 8x and 16x) |
 | `repair.py` | rebuilds a duplicated source frame in the store | `$PY repair.py c3:125` |
 | `fixends.py` | rebuilds the sub-frames next to every real frame in a store built without `rifeutil.Tween` (RIFE dead zone, see pitfalls.md); a store built by the bundled `prep.py` does not need it | `$PY fixends.py` |
 | `posmap.py` | measures where every stored sixteenth really sits (`posmap.json`, read by the refstyle `render.py`) | `$PY posmap.py` after any change of the store |
@@ -98,10 +129,10 @@ Machine these numbers come from: Windows 11, Ryzen 5 5500 (6 cores), 16 GB RAM, 
 | `kill_lags.py` | gunshot onset relative to K for every kill | `$PY kill_lags.py` |
 | `audio.py` | `mix.wav` + stems, and where each shot lands | `$PY audio.py` |
 | `mix_spec.py` | spectrogram of mix and stems in beats | `$PY mix_spec.py -5.2 5 59 72` |
-| `run.sh` | 3 parallel parts + sound + mux -> master | `bash run.sh master.mp4` |
+| `run.sh` | 3 parallel parts + sound + mux -> master | `bash run.sh master.mp4` (the mux applies `volume=2.36` in the house `run.sh`, `volume=1.475` in `scripts/refstyle/run.sh`: the mixes are written at different levels, see "How the sound is made (audio.py)") |
 | `check.py` | smoothness, kill strips, overview, loudness | `$PY check.py master.mp4 --sheets` |
-| `deliver.sh` | upload copy from the master | `bash deliver.sh master.mp4 out.mp4` |
-| `rife_compare.py` | objective comparison of RIFE models | `$PY rife_compare.py rife-v4.25 rife-v4.26` |
+| `deliver.sh` | upload copy from the master | `bash deliver.sh master.mp4 out.mp4` (house: crf 18, max 17 Mbps; `scripts/refstyle/deliver.sh`: crf 17, max 22 Mbps, and its own `volume=1.475`) |
+| `rife_compare.py` | objective comparison of RIFE models | `$PY rife_compare.py rife-v4.25 rife-v4.26`: only `rife-v4.25` ships; download any other version from github.com/TNTwise/rife-ncnn-vulkan (folder `models/`) into `models/<name>/` (it must hold `flownet.bin`; the name must keep the version) |
 
 `scripts/refstyle/` holds the files that replace or extend these for the reference style (its README.md
 lists them): renderer, lyric text, kill finding in raw recordings, word alignment, per-kill gunshots, cover.
@@ -179,8 +210,11 @@ Deleting is the user's call.
 
 ## How the picture is made (render.py)
 
+The house `render.py`; `scripts/refstyle/render.py` shares the store, time map and shutter integration but has no
+window or backdrop and a different set of effects (reference-style.md, "The style and how it is built").
+
 - **Store**: `store/<clip>/<key>.jpg`, key = frame index x 16 + sixteenths, JPEG quality 95 4:4:4, the
-  1344x1080 middle of the 1920x1080 frame. A 4x grid (240 fps) everywhere, 16x (960 fps) where the edit
+  1344x1080 middle of the 1920x1080 frame (reference style: the whole 1920x1080 frame). A 4x grid (240 fps) everywhere, 16x (960 fps) where the edit
   runs slower than 0.7x, and 8x or 16x where the picture travels more than 12 or 28 output pixels per frame.
 - **Time**: `timeline.TimeMap` is a monotone cubic through the anchors (beat -> source frame), so every
   speed change is eased. `lead()` and `tail()` build the usual shapes.
@@ -211,6 +245,9 @@ done. Any new script that calls `rifeutil.load()` must end the same way.
 
 ## How the sound is made (audio.py)
 
+House style. The reference style's `scripts/refstyle/audio.py` places one gunshot per kill at natural pitch and
+no whooshes, and writes the mix at 0.8 (reference-style.md, "Sound").
+
 - **Music**: cut at `T.MUSIC_T0`, optional low-pass sweep (`T.SWEEP`), fade out over `T.FADE_OUT`.
 - **Game sound**: follows the same time maps as the picture, shifted by `lag` frames so the gunshot lands
   on the beat. It fades out between 0.7x and 0.25x and between 1.3x and 1.8x (no pitched-down or
@@ -220,8 +257,9 @@ done. Any new script that calls `rifeutil.load()` must end the same way.
   the whip direction).
 - **Mix**: `0.84 * music + 0.60 * game + effects`, all three faded out over `T.FADE_OUT`. The mix peaks
   above full scale (1.29 in v4: a loud master plus shots), so `mix.wav` and the stems are written at
-  half level; `run.sh` gives the level back (`volume=2.36` = 1.18 x 2), limits at 0.82, and encodes
-  AAC 320k with PNS, TNS and intensity stereo off. Result: -8.5 LUFS, decoded peak -0.7 dBFS.
+  half level; `run.sh` gives the level back (house: `volume=2.36` = 1.18 x 2; the reference style writes
+  0.8 and uses `volume=1.475` = 1.18 / 0.8), limits at 0.82, and encodes
+  AAC 320k with PNS, TNS and intensity stereo off. Result: -8.5 LUFS, decoded peak -0.7 dBFS (house v4).
   (v4 itself was mixed through a full-level 16-bit file: same loudness and peak, but 0.05 % of its
   samples were flattened for up to 0.4 ms before the limiter.)
 

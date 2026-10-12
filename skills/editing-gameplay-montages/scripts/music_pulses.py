@@ -10,7 +10,8 @@ usage: python music_pulses.py        -> a printed shortlist, and pulses.json [[b
 Needs only the music block of timeline.py (MUSIC, BPM, BEAT0, M0, R0, R1); the stars mark the kills of
 whatever SEGS is in the file, so ignore them until the segments are yours.
 Use it to (1) put every kill on a kick or a snare, never on an empty beat or a bare hat (reference style:
-a loud hat may carry a level-1 kill, see reference-style.md), and (2) fill
+a loud hat may carry a level-1 kill, see reference-style.md), (2) put every transition on a kick / bass hit,
+never on a snare alone (the cut lands with the weight of the music), and (3) fill
 PULSES in timeline.py with the strong hits that carry no kill (weight about 0.5 to 0.9).
 This grid-exact measure outranks the coarse bass table of music_tempo.py when they disagree."""
 import json, subprocess
@@ -71,3 +72,10 @@ print("half beats with only a hat (high >= 0.5, no kick, no snare): %d of %d" % 
     sum(1 for r in rows if r[3] >= 0.5 and r[1] < 0.4 and r[2] < 0.6), len(rows)))
 weak = [r for r in rows if r[0] in kills and r[1] < 0.25 and r[2] < 0.4]
 print("kills on a beat with neither kick nor snare:", [(r[0], "low %.2f mid %.2f high %.2f" % tuple(r[1:])) for r in weak] or "none")
+# A transition's musical moment: the start of the incoming take rounded to the half beat. House style: an
+# overlapping transition is centred there; reference style: the take starts CUT (0.15 beat) before its beat.
+by_beat = {r[0]: r for r in rows}
+tr = [(round(s["r0"] * 2) / 2, s["clip"]) for s in T.SEGS[1:]]
+off = [(b, c, "low %.2f mid %.2f" % tuple(by_beat[b][1:3]) if b in by_beat else "outside the grid") for b, c in tr
+       if b not in by_beat or by_beat[b][1] < 0.4]
+print("transitions (%d) not on a kick / bass hit (low >= 0.4):" % len(tr), off or "none")

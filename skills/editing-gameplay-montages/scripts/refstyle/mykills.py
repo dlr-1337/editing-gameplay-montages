@@ -87,6 +87,6 @@ if rows:
 json.dump(out, open("kills.json", "w"), indent=1)
 print("kills.json: %d kills; sheets gal_01..gal_%02d.jpg" % (len(out), sheet))
 if missing:
-    print("NOT in clips.json, so their kills were skipped (add them, run mksrc.py and mkpts.py, then this again):")
+    print("NOT in clips.json, so their kills were skipped (add them, run ingest.py and mkpts.py, then this again):")
     for f in sorted(missing):
         print("   ", f)

@@ -21,7 +21,7 @@ rr = T.R0 + tt / T.PER                      # beat position of every output samp
 def decode(path):
     raw = subprocess.run([FF, "-v", "error", "-i", path, "-map", "0:a:0", "-ac", "2", "-ar", str(SR), "-f", "f32le", "-"],
                          capture_output=True).stdout
-    assert len(raw), f"no sound decoded from {path}: is the file there? (python mksrc.py creates src/)"
+    assert len(raw), f"no sound decoded from {path}: is the file there? (python ingest.py creates src/)"
     return np.frombuffer(raw, np.float32).reshape(-1, 2)
 
 

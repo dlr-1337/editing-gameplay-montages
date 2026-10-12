@@ -2,7 +2,15 @@
 and the nearest 16th-note grid point, in timeline beats. Used to place the on-screen words by hand
 (OVERRIDE in lyrics_align.py) where the automatic assignment is doubtful.
 
-usage: python cue_onsets.py [lyrics_whisper.json]      prints the words that fall inside the video (R0..R1)"""
+usage: python cue_onsets.py [lyrics_whisper.json]      prints the words that fall inside the video (R0..R1)
+Needs timeline.py (MUSIC, BPM, BEAT0, M0, R0, R1). It uses the RECOGNISED words, so a line is read by its position
+in lyrics_whisper.json, not by the corrected text.
+How to read it: "whisper(s)" / "beat" = the recogniser's time for the word; the middle column lists up to three
+onsets within +-0.14 s of it, strongest first, as beat(dB rise); the last column is the nearest 16th. A word whose
+recognised beat has no onset beside it, or whose strongest onset lies on the neighbouring syllable, is the one to
+pin: put the onset beat you trust into OVERRIDE minus 0.04 (see the comment at OVERRIDE in lyrics_align.py), or
+leave the word out with DROP. (The onsets here come from a plain band-pass envelope, lyrics_align.py's from the
+harmonic part of the spectrogram, so the two lists can differ.)"""
 import json, subprocess, sys
 import numpy as np
 from scipy import signal

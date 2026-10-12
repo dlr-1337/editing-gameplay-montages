@@ -9,12 +9,13 @@ so keep tiles at 100 px or more with large labels (the scripts do).
 | Check | Passes when |
 |---|---|
 | `$PY timeline.py` | prints every segment, no assertion, no "note:" you did not intend |
+| `$PY music_pulses.py` | "transitions not on a kick / bass hit: none" (both styles); house style also "kills on a beat with neither kick nor snare: none" |
 | `$PY ranges.py` | no ERROR (anchors inside the clips) |
 | `$PY check_store.py` | `missing footage: 0` and no frame that copies its predecessor |
 | gallery from `kill_table.py` (raw recordings: `gal_NN.jpg` from `mykills.py`) | for every kill: flash visible on tile `+0`, absent on `-1`; otherwise set K with `[banner, K]` (raw recordings: find it on `strip.py` and type it into the timeline entry) |
 | `$PY render.py N N+1 x.jpg` on a kill, a transition middle, a slow-motion frame, the first and last second | framing right, window and backdrop as intended, nothing black, torn or doubled |
 | `$PY render.py A B x.jpg 2` across a transition | both clips visible mid-way, smooth smear, no stepped copies |
-| `$PY audio.py` | house style: each kill line near 0 ms (see "Sound"); `mix peak` up to 2.0 is fine, the files are written at half level. Reference style: read the closing count of measured, clip-offset and silent gunshots (reference-style.md, "Sound"); `mix peak` below 1.0 (v3: 0.94), the script stops above it |
+| `$PY audio.py` | house style: each kill line near 0 ms (see "Sound" below); `mix peak` up to 2.0 is fine, the files are written at half level. Reference style: read the closing count of measured, clip-offset and silent gunshots (reference-style.md, "Sound"); `mix peak` below 1.0 (v3: 0.94), the script stops above it |
 
 Frame number of a beat: `round((beat - R0) * FPB)`.
 
@@ -34,7 +35,7 @@ A beat rarely falls on the centre of a frame. `check.py` prints, per kill, the e
 where the flash must first show: on `+0` (only faintly when just a few percent of that frame's
 exposure lies after the shot), or on `+1` when the shot comes after the exposure of `+0`. Later than
 that tile means K or the beat is wrong (or, in a slow lead-in, that the time map reaches the kill below real
-speed: pitfalls.md, "Bullet time into a kill"). A level 3 kill shows its impact frame on `+0`: an inverted
+speed: the row "Bullet time into a kill" in the "Picture" table of pitfalls.md). A level 3 kill shows its impact frame on `+0`: an inverted
 monochrome picture (nearly black for a bright scene, nearly white for a dark one). That is the effect,
 not a fault; judge its flash on the next tiles.
 
@@ -48,7 +49,7 @@ Run it again on the upload copy: that is the file the user gets.
   are transition frames or black).
 - **A whole source position (`source frame 7379.0`) inside slow motion below about 0.2x**: RIFE's dead zone
   in a store built without `rifeutil.Tween`. `$PY fixends.py` (GPU), in the reference style then
-  `$PY posmap.py`, render again (pitfalls.md, "Picture").
+  `$PY posmap.py`, render again (the dead-zone row in the "Picture" table of pitfalls.md).
 
 Otherwise `$PY cadence.py <clip> <frame-8> <frame+8> --detail`:
 
@@ -112,7 +113,7 @@ https://www.shortsync.app/features/60fps-video-upload
 
 ## The report
 
-Portuguese, informal, no questions. Shape that worked:
+In the user's language, informal, no questions (what to make was settled in the briefing). Shape that worked:
 
 1. First sentence: the file path, length, size, and that it was checked by measurement but not watched.
 2. The user's main complaint first: cause, fix, and the number before and after.

@@ -6,8 +6,15 @@
    assigned to one onset near its recognised time, in order (dynamic programming). A word without a clear
    onset falls back to the nearest 16th note.
 3. Words of one or two letters ride with the next word; words less than 0.3 beat apart are shown together.
+4. Each cue is tinted: "red" inside the beat ranges of RED (default: the intro, before beat -0.5), otherwise gold,
+   silver and white in turn.
 
-usage: python lyrics_align.py        -> lyric_cues.json [[beat_in, beat_out, "WORD"], ...] and a printed table"""
+usage: python lyrics_align.py        -> lyric_cues.json [[beat_in, beat_out, "WORD", style], ...] and a printed table
+Needs timeline.py (MUSIC, BPM, BEAT0, M0) and lyrics_whisper.json (transcribe.py), and LINES filled in below.
+How to read the table: one row per word, "recognised" = the beat of the recogniser's time, "chosen" = the beat
+of the onset the word was put on (hence the DROP key: that "recognised" beat rounded to 1 decimal), difference in
+ms. A word that moved by more than about 100 ms needs a look at cue_onsets.py; OVERRIDE / DROP are explained at
+their definitions below."""
 import json, subprocess, sys
 import numpy as np
 from scipy import signal, ndimage
@@ -39,16 +46,32 @@ def beat(sec):
 
 pb = beat(pt)
 W = json.load(open("lyrics_whisper.json", encoding="utf-8"))
-# confirmed lines, set per song: (time of the line's first word in the recognition (s), corrected words), e.g.
+# confirmed lines, set per song: (t0, corrected words), e.g.
 #   LINES = [(14.18, ["PRIMEIRA", "LINHA", "CONFIRMADA"]), (15.88, ["SEGUNDA", "LINHA"])]
+# t0 = the "s" time (seconds) of the line's first recognised word in lyrics_whisper.json; the recognised word nearest
+# to t0 is the line's first word. The corrected words are mapped ONE TO ONE onto that many consecutive recognised words
+# (across segment borders): the timing of word k comes from the k-th recognised word after the first. So the number of
+# corrected words must equal the number of recognised words the line spans; if the recogniser split or merged a word,
+# the timing of everything after it in the entry comes from the wrong words: end the entry before the mismatch and start
+# the next one, with its own t0, after it. A line that runs past the last recognised word stops with an IndexError.
 # Only lines confirmed against a published lyrics page (reference-style.md, "Lyric words").
 LINES = []
 if not LINES:
     sys.exit("lyrics_align.py: LINES is empty. Fill it with this song's confirmed lines first (no lines = no lyric words).")
 allw = [w for s in W for w in s["words"]]
 ADV = 0.04          # beats (18 ms): the word starts to appear just before the vowel, never after it
-OVERRIDE = {}       # set per song: {("WORD", beat_from, beat_to): beat} pins a word found in that range to a hand-read onset
-DROP = set()        # set per song: {("WORD", beat)} recognised words that are not trusted
+# set per song: {("WORD", beat_from, beat_to): beat}. Applies to a corrected word equal to WORD whose RECOGNISED beat
+# (the "recognised" column of the table) lies in beat_from..beat_to. `beat` is the beat at which the word's cue starts
+# to show; the onset it stands for is ADV (0.04 beat) later, which is what the table prints as "chosen". To put the
+# onset on a beat B read from cue_onsets.py, give B - 0.04 (the automatic choice shows its cue ADV before the onset).
+OVERRIDE = {}
+# set per song: {("WORD", beat)}: the corrected word equal to WORD whose recognised beat, ROUNDED TO ONE DECIMAL
+# (round(beat, 1): the table prints two decimals, so check x.x5 values), equals `beat` is not shown. The word still takes
+# part in the assignment of the other words; only the cue is left out.
+DROP = set()
+# set per song: beat ranges (beat_from, beat_to) whose cues are tinted red (as the intro of the delivered edit and its
+# breakdown, (27.5, 31.5)); every other cue cycles gold, silver, white. Default: only the intro, before beat -0.5.
+RED = [(-1e9, -0.5)]
 cues, table = [], []
 for t0, words in LINES:
     i0 = min(range(len(allw)), key=lambda i: abs(allw[i]["s"] - t0))
@@ -106,8 +129,8 @@ for i, c in enumerate(cues):                              # a word leaves when t
     if c[1] is None or (nxt is not None and c[1] > nxt - 0.04):
         c[1] = round(nxt - 0.04, 3)
 cyc = ["gold", "silver", "white"]
-for i, c in enumerate(cues):                              # red in the breakdown (as the intro), metallic tints elsewhere
-    c.append("red" if c[0] < -0.5 or 27.5 < c[0] < 31.5 else cyc[i % 3])
+for i, c in enumerate(cues):                              # red inside the RED beat ranges, metallic tints elsewhere
+    c.append("red" if any(lo < c[0] < hi for lo, hi in RED) else cyc[i % 3])
 json.dump(cues, open("lyric_cues.json", "w", encoding="utf-8"), ensure_ascii=False)
 print("word            recognised  chosen   (difference in ms)")
 for wd, b, s_ in table:

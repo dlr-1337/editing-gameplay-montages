@@ -34,9 +34,9 @@ for c in names:
           % (d.min(), med, d.max(), dev.min(), dev.max()))
     w = info.split(",")
     if len(w) >= 3 and (int(w[1]), int(w[2])) != (clipio.SW, clipio.SH):
-        print(f"    WARNING: {w[1]}x{w[2]} but clipio.py expects {clipio.SW}x{clipio.SH}: adjust SW/SH/CROP there and SRC_W/SRC_H in render.py")
+        print(f"    WARNING: {w[1]}x{w[2]}, not the working format {clipio.SW}x{clipio.SH}: src/ was not made by ingest.py; run it")
     if abs(rate - 60) > 0.5:
-        print("    WARNING: not 60 fps. timeline.py assumes 60 source frames per second (FPB frames per beat = real time)")
+        print("    WARNING: not 60 fps, not the working format: src/ was not made by ingest.py; run it")
     if len(gaps):
         print("    WARNING: %d gaps (dropped frames in the recording) at frame (time, ms): " % len(gaps)
               + ", ".join("%d (%.2fs, %.0f)" % (i, t[i], d[i]) for i in gaps[:20]))

@@ -1,7 +1,14 @@
-"""Word-level transcription of the song (Portuguese) with faster-whisper.
+"""Word-level transcription of the song (default Portuguese) with faster-whisper.
 
 usage: transcribe.py <audio> <out.json> [model] [t_end]
-"""
+  model   default large-v3 (CPU, int8)
+  t_end   seconds: recognise only the first t_end seconds of the song (clip_timestamps [0, t_end]); default the whole song
+Set LANG (language code) and PROMPT (passed as initial_prompt: artist, title, genre) in this file for the song.
+Runs in its own venv with faster-whisper (pipeline.md, "Setup"); ff.py must be in the current folder (audio is decoded
+with ffmpeg to 16 kHz mono).
+Output: <out.json> = [{"s", "e", "text", "words": [{"w", "s", "e", "p"}], "avg_logprob", "no_speech"}, ...] per segment,
+times in seconds of the audio file; "p" = word probability (a low value marks a doubtful word). One line per segment is
+printed. The words are NOT reliable on rap over a beat (reference-style.md, "Lyric words"): confirm them first."""
 import json
 import sys
 
