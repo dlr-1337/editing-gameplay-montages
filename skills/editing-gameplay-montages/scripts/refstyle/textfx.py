@@ -4,13 +4,16 @@ glow, held while the word is sung, then a quick fade. Composited in linear light
 blur, so a whip blurs the word together with the footage.
 
 T.TEXT = [(beat_in, beat_out, "WORD", style)], style in STYLES.  draw(canvas, n, r) paints frame n in place."""
-import math
+import math, os
 import numpy as np
 import cv2
 from PIL import Image, ImageDraw, ImageFont
 import timeline as T
 
-FONT = "C:/Windows/Fonts/impact.ttf"
+FONT = os.environ.get("IMPACT_FONT", os.path.join(os.environ.get("WINDIR", "C:/Windows"), "Fonts", "impact.ttf"))
+if not os.path.exists(FONT):
+    raise SystemExit(f"textfx.py: the Impact font is not at {FONT}. Install Impact, or set IMPACT_FONT to its .ttf path "
+                     "(another heavy condensed font works but changes the look).")
 W, H = 1920, 1080
 GAMMA = 2.2
 MAXW = 1760

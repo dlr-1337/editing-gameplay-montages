@@ -23,7 +23,7 @@ Added:
 | File | What it does |
 |---|---|
 | `timeline_ref_example.py` | the delivered edit: entry list `E`, `pre()` / `post()`, `TEXT`, `LUMA_FADE`. Its lyric cues are not published (song lyrics); a project gets its own from `lyrics_align.py` |
-| `textfx.py`, `text_test.py` | lyric words: Impact (`C:/Windows/Fonts/impact.ttf`, no fallback), random letter reveal, translucent tinted fill, ink centred on the frame; `$PY text_test.py` shows the first cue of every style on a flat background |
+| `textfx.py`, `text_test.py` | lyric words: Impact (Windows font folder, or `IMPACT_FONT`), random letter reveal, translucent tinted fill, ink centred on the frame; `$PY text_test.py` shows the first cue of every style on a flat background |
 | `detect_kills.py`, `kill_review.py` | `$PY detect_kills.py <clips folder> detect` scans raw recordings for the player's kills on the kill feed; `$PY kill_review.py <clips folder> detect review` writes review sheets and `review/index.json` (copy to `detections.json`) |
 | `mykills.py`, `strip.py`, `flick.py` | shot frame K from the ammo counter with galleries (`gal_NN.jpg`: flash on tile `+0`, absent on `-1`): `$PY mykills.py` for every detection not in `BAD`, `$PY mykills.py 12,13` for those ids only (it numbers the sheets from `gal_01.jpg` again, so it overwrites the sheets of a full run, and it rewrites `kills.json`); per-frame strips to set K by hand; camera travel and earlier shots per kill. The K typed into the timeline entry is the authoritative one: `kills.json` is a regenerated record, read by `flick.py` |
 | `introcand.py` | candidate shots as sheets: `$PY introcand.py 1 c22:6600:6800:10` (zoom 1: the HUD-hiding crop it was written for is what the user rejected) |

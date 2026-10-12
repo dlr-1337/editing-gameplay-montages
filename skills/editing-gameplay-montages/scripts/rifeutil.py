@@ -18,7 +18,7 @@ def model_dir(name=DEFAULT):
 
 def load(name=DEFAULT):
     from rife_ncnn_vulkan_python import Rife
-    return Rife(gpuid=0, model=model_dir(name), num_threads=2)
+    return Rife(gpuid=int(os.environ.get("RIFE_GPU", "0")), model=model_dir(name), num_threads=2)    # RIFE_GPU: Vulkan device index
 
 
 def finish():

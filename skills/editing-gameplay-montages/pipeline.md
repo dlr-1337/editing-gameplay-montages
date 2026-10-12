@@ -45,7 +45,8 @@ SK=~/.claude/skills/editing-gameplay-montages
 P="/c/Users/<you>/Videos/<clips folder>/_editor"    # one project folder per video (_editor_<name> if _editor is taken)
 mkdir -p "$P" && cd "$P"
 cp "$SK"/scripts/*.* . && cp -r "$SK"/scripts/games "$SK"/models . && cp timeline_example.py timeline.py     # *.* = files only (a bare * also hits the refstyle folder and cp fails); games/ = kill-finder profiles
-# reference style, in addition:
+# reference style, in addition (its render.py, audio.py, check.py, clipio.py, densify.py, run.sh, deliver.sh replace the
+# house ones on purpose: one project folder is one style; a second style for the same clips = a second _editor_<name>/):
 #   cp "$SK"/scripts/refstyle/*.* . && cp timeline_ref_example.py timeline.py
 uv venv --python 3.11 venv311                       # 3.11: the RIFE binding has no wheels for 3.14
 uv pip install --python venv311/Scripts/python.exe -r requirements.txt
@@ -95,12 +96,13 @@ a shell opened before the install does not have it on PATH, which is why `ff.py`
 Machine these numbers come from: Windows 11, Ryzen 5 5500 (6 cores), 16 GB RAM, GTX 1650 4 GB.
 
 Two settings that depend on the PC:
-- GPU index: `rifeutil.load()` creates `Rife(gpuid=0, ...)`. On a PC with two GPUs (integrated and dedicated) the
-  Vulkan device index of the dedicated one may not be 0: change `gpuid` there (one place, `rifeutil.py`) and check
-  with the GPU command under "Handling jobs on this PC" that the 3D load is on the dedicated GPU while `prep.py` runs.
+- GPU index: `rifeutil.load()` uses Vulkan device `RIFE_GPU` (environment variable, default 0). On a PC with two GPUs
+  (integrated and dedicated) the dedicated one may not be 0: `export RIFE_GPU=1` before `prep.py` / `densify.py`, and
+  check with the GPU command under "Handling jobs on this PC" that the 3D load is on the dedicated GPU.
 - CPU threads: `render.py` gives OpenCV `CVT` threads (environment variable, default 4) in each of the three
-  processes `run.sh` starts. `refstyle/run.sh` takes `CVT` from the environment (`CVT=2 bash run.sh master.mp4`);
-  the house `run.sh` sets `CVT=4` itself, so edit its `export CVT=4` line there.
+  processes `run.sh` starts (both styles): `CVT=2 bash run.sh master.mp4` on a 4-core CPU.
+- Lyric font (reference style): `textfx.py` uses Impact from the Windows font folder, or `IMPACT_FONT` (path to a
+  .ttf); it stops with that message when the font is missing.
 
 ## Scripts
 

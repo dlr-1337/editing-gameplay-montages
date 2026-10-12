@@ -9,7 +9,7 @@ export FF
 OUT=${1:?usage: bash run.sh master.mp4}
 N=$("$PY" -c "import timeline as T; print(T.N_FRAMES)" | tr -d '\r')
 A=$((N/3)); B=$((2*N/3))
-export CVT=4
+export CVT=${CVT:-4}                 # OpenCV threads per render process (three run at once)
 "$PY" render.py 0 $A part_0.mp4 > part_0.log 2>&1 & p0=$!
 "$PY" render.py $A $B part_1.mp4 > part_1.log 2>&1 & p1=$!
 "$PY" render.py $B $N part_2.mp4 > part_2.log 2>&1 & p2=$!

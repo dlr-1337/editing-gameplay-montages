@@ -14,19 +14,20 @@ Não usa editor de vídeo. O Claude escreve a edição num arquivo Python (`time
 
 | Item | Detalhe |
 |---|---|
-| Windows 10/11 | Os comandos da skill usam Git Bash e PowerShell |
+| Windows 10/11 | Por enquanto só Windows: os comandos da skill usam Git Bash ([Git for Windows](https://git-scm.com/download/win): `winget install Git.Git`) e PowerShell |
 | [Claude Code](https://docs.claude.com/en/docs/claude-code) | Quem roda a skill |
 | Modelo | **Claude Opus 5.5 com pensamento no `max` (recomendado).** No `xhigh` também funciona, mas com desempenho inferior |
-| Placa de vídeo com Vulkan | Usada na interpolação (RIFE). Testado numa GTX 1650 4 GB, Ryzen 5 5500, 16 GB de RAM |
+| Placa de vídeo com Vulkan | Usada na interpolação (RIFE). Serve NVIDIA, AMD ou Intel com o driver em dia; não precisa de CUDA. Testado numa GTX 1650 4 GB, Ryzen 5 5500, 16 GB de RAM. Notebook com duas placas: a skill explica como escolher a dedicada |
 | [ffmpeg](https://www.gyan.dev/ffmpeg/builds/) | `winget install Gyan.FFmpeg` |
 | [uv](https://docs.astral.sh/uv/) | Cria o Python 3.11 do projeto: `winget install astral-sh.uv` |
 | Gravações de qualquer resolução e taxa | 1080p, 1440p, 4K, 4:3 esticado, ultrawide; de 30 a 240 fps (ShadowPlay, Outplayed, OBS, Medal). O ideal é 60 fps ou mais: a 30 fps metade dos frames tem que ser inventada. Pode ser clipe curto ou gravação crua de alguns minutos |
-| Espaço em disco | De 7 a 13 GB por vídeo (frames interpolados; dá para apagar depois) |
+| Espaço em disco | De 7 a 13 GB por vídeo para os frames interpolados (dá para apagar depois). Some o tamanho das cópias convertidas quando os clipes não são 1920x1080 a 60 fps, ou estão em outro disco (aí eles são copiados, não linkados) |
 
 ## Instalar
 
 ```bash
 git clone https://github.com/gustavomenani/editing-gameplay-montages.git
+mkdir -p ~/.claude/skills
 cp -r editing-gameplay-montages/skills/editing-gameplay-montages ~/.claude/skills/
 ```
 
@@ -34,8 +35,11 @@ No PowerShell:
 
 ```powershell
 git clone https://github.com/gustavomenani/editing-gameplay-montages.git
+New-Item -ItemType Directory -Force $HOME\.claude\skills | Out-Null
 Copy-Item -Recurse editing-gameplay-montages\skills\editing-gameplay-montages $HOME\.claude\skills\
 ```
+
+Para atualizar depois: `git pull` dentro da pasta clonada, apague a pasta antiga `~/.claude/skills/editing-gameplay-montages` e copie de novo com os mesmos comandos. A skill pede ao Claude que anote nela o que aprender nos seus projetos: se ele já anotou algo, guarde uma cópia da pasta antiga antes de apagar.
 
 O resto (venv, dependências Python, modelo RIFE) o Claude instala sozinho na pasta do projeto, seguindo a skill.
 
