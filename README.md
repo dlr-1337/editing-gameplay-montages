@@ -39,7 +39,7 @@ New-Item -ItemType Directory -Force $HOME\.claude\skills | Out-Null
 Copy-Item -Recurse editing-gameplay-montages\skills\editing-gameplay-montages $HOME\.claude\skills\
 ```
 
-Para atualizar depois: `git pull` dentro da pasta clonada, apague a pasta antiga `~/.claude/skills/editing-gameplay-montages` e copie de novo com os mesmos comandos. A skill pede ao Claude que anote nela o que aprender nos seus projetos: se ele já anotou algo, guarde uma cópia da pasta antiga antes de apagar.
+Para atualizar depois: rode `git pull` dentro da pasta clonada. A skill pede ao Claude que anote nela o que aprender nos seus projetos: se ele já anotou algo, guarde uma cópia de `~/.claude/skills/editing-gameplay-montages` antes de apagar essa pasta. Depois, volte à pasta de onde executou `git clone` e repita apenas os comandos de criação da pasta e cópia acima (`mkdir`/`cp` no Git Bash ou `New-Item`/`Copy-Item` no PowerShell). Os caminhos de origem desses comandos são relativos a essa pasta, não à pasta clonada.
 
 O resto (venv, dependências Python, modelo RIFE) o Claude instala sozinho na pasta do projeto, seguindo a skill.
 
