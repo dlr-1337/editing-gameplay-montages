@@ -59,6 +59,7 @@ LOOK = 12            # frames from "before the row" to "row finished": slide-in 
 HOLD = 6             # frames the finished row must stay still
 CHANGED = 40         # max-channel level change that counts as "a pixel changed"
 STILL = 10           # ... and as "a pixel did not move"
+OWN_DELAY = 5       # frames after the band changed within which an own row's colours must show (a row appears at once)
 
 
 def load_profile(game):
@@ -160,6 +161,14 @@ def scan_feed(clip, prof, trace=None):
         if own and all(color_counts(full[max(0, r["j0"] - 2)][rows], own)[m["name"]] >= m["min_px"] for m in own["masks"]):
             trace.append((j, fy + 2 * a, fy + 2 * b, "own row there before"))
             return                                                  # an own row was already there before the change: it is leaving
+        pitch, rw = prof["feed"].get("row_pitch", row_h), 2 * cw
+        x0 = fw - rw if right else 0
+        pre_f, post_f = full[max(0, r["j0"] - 2)][:, x0:x0 + rw].astype(np.int16), full[get(j + look)][:, x0:x0 + rw].astype(np.int16)
+        y0f, y1f = 2 * a, 2 * b
+        for s in range(pitch - 3, pitch + 4):                       # the rows above this one expired and the feed scrolled up:
+            if y1f + s <= pre_f.shape[0] and (np.abs(post_f[y0f:y1f] - pre_f[y0f + s:y1f + s]).max(2) > CHANGED).mean() < 0.3:
+                trace.append((j, fy + y0f, fy + y1f, "scrolled up"))     # this band now shows what the band one pitch below showed
+                return
         onset = j
         for t in range(j - 1, min(newest, j + look) + 1):          # first frame where the band no longer looks like before
             if (np.abs(small[t][a:b] - pre[a:b]).max(2) > CHANGED).mean() >= 0.4:
@@ -167,15 +176,20 @@ def scan_feed(clip, prof, trace=None):
                 break
         ev = {"onset": int(onset), "y0": int(fy + 2 * a), "y1": int(fy + 2 * b), "own": None, "counts": None}
         if own:
-            best = None
+            best, first = None, None
             for t in range(onset + 1, min(newest, onset + 26) + 1):
                 cnt = color_counts(full[t][rows], own)
                 ok = all(cnt[m["name"]] >= m["min_px"] for m in own["masks"])
+                if ok and first is None:
+                    first = t
                 score = sum(min(1.0, cnt[m["name"]] / m["min_px"]) for m in own["masks"])
                 if best is None or (ok, score) > (best[0], best[1]):
                     best = (ok, score, cnt, t)
             if best:
                 ev["own"], ev["counts"], ev["t_own"] = bool(best[0]), best[2], int(best[3])
+                if first is not None and first - onset > OWN_DELAY:     # the colours came much later than the band changed: a camera
+                    trace.append((j, fy + y0f, fy + y1f, "own colours late"))   # move settling above a row that appears later (found as itself)
+                    return
         state["events"].append(ev)
 
     def flush(newest, final=False):

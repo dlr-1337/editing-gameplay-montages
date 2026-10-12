@@ -3,7 +3,8 @@
 Everything runs from one project folder with the scripts copied into it (they import each other and
 `timeline.py` from the current directory). Shell: Git Bash (the Bash tool). `PY=./venv311/Scripts/python`.
 Each Bash call is a fresh shell: start every command with `cd "$P" && PY=./venv311/Scripts/python &&`
-(written out, since `$P` is gone too).
+(written out, since `$P` is gone too). If a shell refuses the relative path ("command not found"), use the
+absolute one, `PY="$PWD/venv311/Scripts/python.exe"`, and export it: `run.sh` and `deliver.sh` read `$PY`.
 
 ## Project layout
 
@@ -14,7 +15,7 @@ Each Bash call is a fresh shell: start every command with `cd "$P" && PY=./venv3
   src/ingest.json       per clip: original size, fps, method     ingest.py
   pts/c1.csv ...        presentation time of every frame        mkpts.py
   banners.json          banner frame of every kill              you, from find_kills.py
-  kills.json            kill frame K, gunshot, lag              kill_table.py
+  kills.json            kill frame K (+ feed frame, confidence)  kills_auto.py (Valorant alternatives: kill_table.py, mykills.py; each rewrites it)
   timeline.py           THE EDIT                                you, from timeline_example.py
   ranges.json           footage the edit needs                  ranges.py
   store/<clip>/<key>.jpg  real frames + in-betweens             prep.py, densify.py, repair.py
@@ -67,8 +68,12 @@ PY=./venv311/Scripts/python
 
 `$PY ingest.py && $PY mkpts.py`. `ingest.py` brings every source into the working format that everything
 downstream assumes: 1920x1080, 60 fps constant, frame n at t0 + n/60 on the original clock. A source already
-in that format (1920x1080 within 0.5 fps of 60) is hard-linked untouched; anything else (1440p, 4K, 720p,
-4:3 stretched, 21:9, 120 / 144 / 165 / 240 fps, 30 fps, variable frame rate) becomes a converted `src/<name>.mkv`:
+in that format (1920x1080, the recorder's rate within 0.5 fps of 60) is hard-linked untouched, and so is a
+1080p60 recording with dropped frames: its frame indices stay the original's (the Valorant raw-recording tools
+rely on that), `mkpts.py` lists the gaps and `clipio.py` follows the real time table across them. Anything
+else (1440p, 4K, 720p, 4:3 stretched, 21:9, 120 / 144 / 165 / 240 fps, 30 fps, variable frame rate) becomes a
+converted `src/<name>.mkv`; the Valorant raw-recording tools read the original file, so for a converted clip find
+the kills with `kills_auto.py`, which reads `src/`:
 
 - Size: narrower than 16:9 (4:3, 16:10: CS2 "stretched") is stretched to 16:9, which is what the player saw;
   wider (21:9, 32:9) is cropped at the centre; `--aspect stretch|crop|pad` overrides.
@@ -267,7 +272,7 @@ no whooshes, and writes the mix at 0.8 (reference-style.md, "Sound").
 
 ## Other games, other formats
 
-- Kill detection (`find_kills.py`, `kill_table.py`) knows the Valorant HUD at 1080p: the banner badge
-  at x 935, y 841 (50x50) and the muzzle region. Another game needs its own regions; the method
-  (pixel counts in a HUD region, then the gunshot in the sound, then the brightest-jump frame) carries over.
+- Kill detection for any game: `kills_auto.py` with a profile in `games/` (SKILL.md, step 3). The Valorant-only tools
+  (`find_kills.py`, `kill_table.py`: the banner badge at x 935, y 841, 50x50; `refstyle/detect_kills.py`, `mykills.py`:
+  kill feed and ammo counter of the raw file) stay for Valorant 1080p60 recordings linked by `ingest.py`.
 - Horizontal full-frame output: use `scripts/refstyle/` (render.py, check.py and clipio.py are already adapted).

@@ -8,8 +8,8 @@ Reading a strip: 8 digits per source frame, the first group is frame K-2, so the
 The gunshot is where the digits jump (say from 1-2 to 6-9); its position minus K is the lag.
   onset K+2.75    clear jump, use it
   onset K~2.25    weaker jump (found on a second, looser pass): look at the strip before using it
-  onset K ?       nothing clean (voice chat over the shot, slow sounds): read the strip yourself, or take the
-                  lag printed by kill_table.py for that kill, or the value of a neighbouring kill of the clip
+  onset K ?       nothing clean (voice chat over the shot, slow sounds): read the strip yourself, or take
+                  audio_after_K of that kill in kills.json (kills_auto.py), or the value of a neighbouring kill of the clip
 With the right lag the gunshot is heard exactly on the beat. Verify afterwards with audio.py, which prints
 where the loudest game-sound onset of each kill lands. onsets.json is a record for you; nothing reads it."""
 import json, subprocess

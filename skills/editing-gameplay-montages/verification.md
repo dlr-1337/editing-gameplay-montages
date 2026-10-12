@@ -12,7 +12,7 @@ so keep tiles at 100 px or more with large labels (the scripts do).
 | `$PY music_pulses.py` | with `CUTS_ON = "bass"`: "transitions not on a kick / bass hit: none" (both styles); house style also "kills on a beat with neither kick nor snare: none" |
 | `$PY ranges.py` | no ERROR (anchors inside the clips) |
 | `$PY check_store.py` | `missing footage: 0` and no frame that copies its predecessor |
-| gallery from `kill_table.py` (raw recordings: `gal_NN.jpg` from `mykills.py`) | for every kill: flash visible on tile `+0`, absent on `-1`; otherwise set K with `[banner, K]` (raw recordings: find it on `strip.py` and type it into the timeline entry) |
+| `autokill_NN.jpg` from `kills_auto.py` (Valorant alternatives: the gallery from `kill_table.py`, `gal_NN.jpg` from `mykills.py`) | for every kill: it is the player's (own row in the feed), the flash is visible on tile K (`+0`) and absent on K-1. Drop with `--drop` the rows with no flash and no fire at K (conf `low` / `guess`: buy-phase scenery, re-drawn rows) and any second row with the same K. Wrong K: set it in the timeline entry (`strip.py` or `peek.py` every frame to find it) |
 | `$PY render.py N N+1 x.jpg` on a kill, a transition middle, a slow-motion frame, the first and last second | framing right, window and backdrop as intended, nothing black, torn or doubled |
 | `$PY render.py A B x.jpg 2` across a transition | both clips visible mid-way, smooth smear, no stepped copies |
 | `$PY audio.py` | house style: each kill line near 0 ms (see "Sound" below); `mix peak` up to 2.0 is fine, the files are written at half level. Reference style: read the closing count of measured, clip-offset and silent gunshots (reference-style.md, "Sound"); `mix peak` below 1.0 (v3: 0.94), the script stops above it |

@@ -30,14 +30,16 @@ def n_frames(clip):
 
 
 def t2n(clip, t):
-    """Source time (seconds, same clock as the audio) -> fractional frame index."""
+    """Source time (seconds, same clock as the audio) -> fractional frame index.
+    Uses the real time table: a recording linked by ingest.py may have dropped frames (gaps of up to 0.6 s),
+    so an even grid over the whole clip would be off by that much after the first gap."""
     p = pts(clip)
-    return (t - p[0]) * (len(p) - 1) / (p[-1] - p[0])
+    return np.interp(t, p, np.arange(len(p)))
 
 
 def n2t(clip, n):
     p = pts(clip)
-    return p[0] + n * (p[-1] - p[0]) / (len(p) - 1)
+    return np.interp(n, np.arange(len(p)), p)
 
 
 def frame_args(clip, a, b, vf=None):

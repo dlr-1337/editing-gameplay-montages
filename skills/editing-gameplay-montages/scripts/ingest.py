@@ -9,8 +9,12 @@ clips.json:  {"c1": "C:/path/4k TOPPP.mp4", "c2": "C:/path/cs2 stretched.mp4", "
 Keep clips.json: it is the only record of which original file each short name stands for.
 
 What happens to each entry (one table line each: original size @ measured frame rate -> action, time taken):
-  * a 1920x1080 video of about 60 fps (within 0.5 fps; --convert converts it anyway), and every non-video file: hard link
+  * a 1920x1080 video whose frames come every 1/60 s (median frame interval, within 0.5 fps; --convert converts it
+    anyway), and every non-video file: hard link
     (same drive, no extra disk space) or copy (other drive): src/c1.mp4, src/music.flac. Nothing is decoded.
+    A 60 fps recording with dropped frames (average rate a little under 60) is linked too: its frame indices stay the
+    original's, which the Valorant raw-recording tools (refstyle/detect_kills.py, mykills.py) rely on; mkpts.py lists
+    its gaps. Converting it would cost minutes and shift every frame index after the first gap.
   * any other video (other size, 4:3, 21:9, 120 / 144 / 165 / 240 fps, 30 fps, variable frame rate): a converted
     working copy src/c1.mkv: x264 (fast, crf 9) yuv420p tv-range bt709 (render.py's colour tags) + the clip's audio
     as FLAC, 24 bit.
@@ -382,18 +386,21 @@ def main():
                 continue
             w, h = int(v["width"]), int(v["height"])
             rate = (len(ts) - 1) / (ts[-1] - ts[0])
+            k = min(30, len(ts) - 1)                         # the recorder's frame rate, unaffected by dropped frames: median
+            mrate = 1.0 / float(np.median((ts[k:] - ts[:-k]) / k))   # over 30-frame spans (pts are rounded to ms: 16/17/17)
             desc = f"{w}x{h} @ {rate:.3f} fps"
             ent = dict(original=p, width=w, height=h, fps=round(rate, 4), t0=round(float(ts[0]), 6))
             if v.get("color_transfer") in ("smpte2084", "arib-std-b67"):
                 print(f"{name}: WARNING HDR source ({v['color_transfer']}): colours are not tone mapped; record SDR")
-            if (w, h) == (SW, SH) and abs(rate - FPS) < CONFORM_FPS and not args.convert:
+            if (w, h) == (SW, SH) and abs(mrate - FPS) < CONFORM_FPS and not args.convert:
                 for o in have:
                     os.remove(o)
                 dst = os.path.join("src", name + os.path.splitext(p)[1].lower())
                 how = link(p, dst)
                 ent.update(method=how, aspect="none")
                 manifest[name] = ent
-                print(f"{name}: {desc} -> {how} {dst}  ({time.time() - t_in:.1f} s)")
+                gap = "" if abs(rate - FPS) < CONFORM_FPS else f"; 60 fps with dropped frames ({rate:.3f} on average): see mkpts.py"
+                print(f"{name}: {desc} -> {how} {dst}{gap}  ({time.time() - t_in:.1f} s)")
             else:
                 RIFE_CALLS = 0
                 dst, info, text, nfr, used_rife = convert(name, p, v, a, ts, mode, args.aspect)
