@@ -108,24 +108,6 @@ flowchart LR
 | Fim | Escurece pelas sombras primeiro | Fade para o preto |
 | Extra | Capa com o título | |
 
-## O gosto que vem embutido
-
-A skill aprendeu com o feedback de quem a fez. Algumas regras viraram lei:
-
-| Regra | Como foi pedido |
-|---|---|
-| Nada de zoom parado no vídeo todo; zoom só como acento curto | "voce deixou um zoom no video todo ... fica estranho" |
-| Nada pode travar; slow motion perfeitamente liso | "o slow motion ta bem travadinho" |
-| Kill exatamente no beat | "da pra sincronizar melhor" |
-| O fim só escurece, sem zoom no ace | "no fim nao de um zoom no ace apenas deixe a tela escurecer" |
-| Letras translúcidas, no meio da tela, uma palavra por vez | "as letras estavam sem transparencia alguma 100% solidas" |
-| Nenhum texto além da letra | "tira esse valorant edit da tela" |
-| Transições no grave (bumbo, 808) ou no ritmo das kills: **opção sua no briefing**, com o grave como padrão | dica de um editor: "as transições rolarem nos graves da música, não no snare ... vai ficar mais fino" |
-| Kill bonita = tiro limpo de longe, não o maior flick | "aquela kill da raze, é muito feia" |
-| Perguntar só no começo (o briefing); depois decidir sozinho e contar no fim | "nao me pergunte NADA" |
-
-Para mudar o gosto, edite a seção **"What this user wants, in their words"** em `SKILL.md`. Os arquivos da skill estão em inglês porque são escritos para o agente. As respostas para você saem em português.
-
 ## Estrutura
 
 ```text
